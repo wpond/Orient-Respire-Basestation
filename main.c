@@ -168,15 +168,17 @@ void TIMER0_IRQHandler()
 	TIMER_IntClear(TIMER0, TIMER_IF_OF);
 	
 	uint32_t time = RTC_CounterGet();
+	uint32_t time_diff = (time > last_respire_data) ? time - last_respire_data : (16777215 - last_respire_data) + time;
 	
-	if (time - last_respire_data < CMU_ClockFreqGet(cmuClock_RTC) * 2)
+	if (time_diff < CMU_ClockFreqGet(cmuClock_RTC) * 3)
 	{
 		LED_Toggle(GREEN);
+		LED_Off(RED);
 	}
 	else
 	{
 		LED_Off(GREEN);
-		LED_Toggle(RED);
+		LED_On(RED);
 	}
 	
 }
@@ -261,6 +263,7 @@ int main()
 	// start microsd card
 	if (initFatFS() == -1)
 	{
+		INT_Disable();
 		LED_On(RED);
 		LED_On(GREEN);
 		LED_On(BLUE);
@@ -295,6 +298,7 @@ int main()
 					
 					if (f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 					{
+						INT_Disable();
 						LED_On(GREEN);
 						LED_On(BLUE);
 						LED_Off(RED);
@@ -340,6 +344,7 @@ int main()
 			uint32_t bytes_written;
 			if (f_write(&file, buffer, 43, &bytes_written) != FR_OK) 
 			{
+				INT_Disable();
 				LED_Off(BLUE);
 				LED_On(RED);
 				LED_On(GREEN);
@@ -348,6 +353,7 @@ int main()
 			
 			if (f_sync(&file) != FR_OK || bytes_written < 43)
 			{
+				INT_Disable();
 				LED_On(RED);
 				LED_On(BLUE);
 				LED_Off(GREEN);
