@@ -1,3 +1,6 @@
+/* definitions */
+//#define TIME_SERVICE
+
 /* includes */
 #include <stdint.h>
 #include <stdbool.h>
@@ -247,13 +250,43 @@ int main()
 	// init radio
 	RADIO_Init();
 	
+	uint8_t i;
+	
+	#ifdef TIME_SERVICE
+	
+		uint8_t payload[32];
+		RADIO_ConfigTimeService();
+		while(1)
+		{
+			
+			if (USB_Message > 0)
+			{
+				
+				for (i = 0; i < 32; i++)
+					payload[i] = usbMessage[i];
+				usbMessageLen = 0;
+				USB_Message = 0;
+				
+				if (!RADIO_Send(payload))
+					LED_On(RED);
+				else
+					LED_Off(RED);
+				RADIO_EnableTX(true);
+				LED_Toggle(GREEN);
+				
+			}
+			
+		}
+	
+	#endif
+	
 	// init timer
 	LEDTIMER_Init();
 	
 	RADIO_ConfigRX();
 	RADIO_EnableRX(true);
 	
-	uint8_t buffer[43], i;
+	uint8_t buffer[43];
 	uint32_t time;
 	
 	// init to 0

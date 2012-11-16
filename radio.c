@@ -103,6 +103,16 @@ void RADIO_Init()
 	
 }
 
+void RADIO_ConfigTimeService()
+{
+	
+	writeRegister(NRF_EN_AA,0x00);
+	writeRegister(NRF_SETUP_RETR,0x00);
+	writeRegister(NRF_RF_CH,0);
+	RADIO_ConfigTX();
+	
+}
+
 void RADIO_ConfigTX()
 {
 

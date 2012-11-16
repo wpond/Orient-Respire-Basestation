@@ -35,6 +35,7 @@ void RADIO_Init();
 
 void RADIO_ConfigTX();
 void RADIO_ConfigRX();
+void RADIO_ConfigTimeService();
 
 void RADIO_EnableRX(bool enable);
 void RADIO_EnableTX(bool enable);
