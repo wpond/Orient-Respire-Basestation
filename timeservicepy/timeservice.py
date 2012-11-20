@@ -2,7 +2,7 @@ import serial
 from struct import *
 import time
 
-COMPORT = "COM14"
+COMPORT = "COM15"
 current_time = time.mktime(time.gmtime())
 
 while 1:

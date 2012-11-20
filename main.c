@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
 #include "efm32.h"
 #include "efm32_chip.h"
@@ -237,9 +239,6 @@ int main()
 	// init LEDs
 	LED_Init();
 	
-	// show startup LEDs
-	startupLEDs();
-	
 	// enable even interrupts (radio)
 	NVIC_ClearPendingIRQ(GPIO_EVEN_IRQn);
 	NVIC_EnableIRQ(GPIO_EVEN_IRQn);
@@ -249,6 +248,9 @@ int main()
 	
 	// init radio
 	RADIO_Init();
+	
+	// show startup LEDs
+	startupLEDs();
 	
 	uint8_t i;
 	
@@ -287,7 +289,7 @@ int main()
 	RADIO_EnableRX(true);
 	
 	uint8_t buffer[43];
-	uint32_t time;
+	uint32_t current_time;
 	
 	// init to 0
 	for (i = 0; i < 43; i++)
@@ -313,12 +315,30 @@ int main()
 			RADIO_Recv(buffer+1);
 			
 			// get current time
-			time = RTC_CounterGet();
+			current_time = RTC_CounterGet();
 			
 			if (buffer[1] & 0x02 || buffer[1] & 0x01)
-				last_respire_data = time;
+				last_respire_data = current_time;
 			else if (buffer[1] & 0x03 || buffer[1] & 0x04)
-				last_pressure_data = time;
+				last_pressure_data = current_time;
+			
+			if (buffer[1] & 0x01)
+			{
+				
+				time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
+					
+				char filename[19];
+				//sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
+				
+				struct tm *curDate;
+				
+				curDate = localtime(&epochTime);
+				
+				strftime(filename,19,"***%m%d%H%M.txt***",curDate);
+				
+				USB_Transmit(filename,19);
+				
+			}
 			
 			if (!fileOpened)
 			{
@@ -326,8 +346,16 @@ int main()
 				if (buffer[1] & 0x01)
 				{
 					
+					time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
+					
 					char filename[13];
-					sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
+					//sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
+					
+					struct tm *curDate;
+					
+					curDate = localtime(&epochTime);
+					
+					strftime(filename,13,"%m%d%H%M.txt",curDate);
 					
 					if (f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
 					{
@@ -355,10 +383,10 @@ int main()
 			{
 			
 				// set time
-				buffer[28] = (time >> 8) & 0xFF;
-				buffer[29] = (time) & 0xFF;
+				buffer[28] = (current_time >> 8) & 0xFF;
+				buffer[29] = (current_time) & 0xFF;
 				// clear sync stuff
-				for (i = 7; i < 15; i++)
+				for (i = 11; i < 15; i++)
 					buffer[i] = 0;
 				
       }
