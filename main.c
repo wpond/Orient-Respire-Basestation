@@ -321,6 +321,7 @@ int main()
 				last_respire_data = current_time;
 			else if (buffer[1] & 0x03 || buffer[1] & 0x04)
 				last_pressure_data = current_time;
+			
 			/*
 			if (buffer[1] & 0x01)
 			{
@@ -341,8 +342,6 @@ int main()
 			}
 			*/
 			
-			
-			
 			if (!fileOpened)
 			{
 				
@@ -351,7 +350,7 @@ int main()
 					
 					//time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
 					
-					epochTime = 1354551615; // ~ 3/12/12 16:20
+					time_t epochTime = 1354551615; // ~ 3/12/12 16:20
 					
 					char filename[13];
 					//sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
@@ -408,7 +407,7 @@ int main()
 			
 			// store on SD
 			uint32_t bytes_written;
-			if (f_write(&file, buffer, 43, &bytes_written) != FR_OK) 
+			if (f_write(&file, buffer, 43, (UINT*)&bytes_written) != FR_OK) 
 			{
 				INT_Disable();
 				LED_Off(BLUE);
