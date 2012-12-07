@@ -50,7 +50,7 @@ void RADIO_Init()
 	
 	usartInit.msbf = true;
 	usartInit.clockMode = usartClockMode0;
-	usartInit.baudrate = 1000000;
+	usartInit.baudrate = 5000000;
 	USART_InitSync(NRF_USART, &usartInit);
 	NRF_USART->ROUTE = (NRF_USART->ROUTE & ~_USART_ROUTE_LOCATION_MASK) | USART_ROUTE_LOCATION_LOC2;
 	NRF_USART->ROUTE |= USART_ROUTE_TXPEN | USART_ROUTE_RXPEN | USART_ROUTE_CLKPEN;
@@ -311,7 +311,7 @@ void RADIO_Interrupt()
 		if (status & 0x40)
 		{
 			
-			bufferCount++;
+			bufferCount = 3;
 			
 		}
 		

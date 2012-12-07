@@ -308,11 +308,11 @@ int main()
   while (1)
   {
 		
-		if (RADIO_GetBufferFill() > 0)
-		{
+		//if (RADIO_GetBufferFill() > 0)
+		//{
 			
 			// fill from 2nd byte
-			RADIO_Recv(buffer+1);
+			while (!RADIO_Recv(buffer+1));
 			
 			// get current time
 			current_time = RTC_CounterGet();
@@ -321,6 +321,8 @@ int main()
 				last_respire_data = current_time;
 			else if (buffer[1] & 0x03 || buffer[1] & 0x04)
 				last_pressure_data = current_time;
+			else
+				continue;
 			
 			/*
 			if (buffer[1] & 0x01)
@@ -341,7 +343,7 @@ int main()
 				
 			}
 			*/
-			
+			/*
 			if (!fileOpened)
 			{
 				
@@ -379,6 +381,7 @@ int main()
 				}
 				
 			}
+			*/
 			
 			// set first byte to signal start
 			buffer[0] = '*';
@@ -387,11 +390,11 @@ int main()
 			{
 			
 				// set time
-				buffer[28] = (current_time >> 8) & 0xFF;
-				buffer[29] = (current_time) & 0xFF;
+				//buffer[28] = (current_time >> 8) & 0xFF;
+				//buffer[29] = (current_time) & 0xFF;
 				// clear sync stuff
-				for (i = 11; i < 15; i++)
-					buffer[i] = 0;
+				//for (i = 11; i < 15; i++)
+				//	buffer[i] = 0;
 				
       }
       
@@ -404,7 +407,7 @@ int main()
 			
 			// transmit
 			USB_Transmit(buffer,43);
-			
+			/*
 			// store on SD
 			uint32_t bytes_written;
 			if (f_write(&file, buffer, 43, (UINT*)&bytes_written) != FR_OK) 
@@ -424,8 +427,9 @@ int main()
 				LED_Off(GREEN);
 				while(1);
 			}
+			*/
 			
-		}
+		//}
 		
   }
 	
