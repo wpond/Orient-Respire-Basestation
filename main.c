@@ -31,6 +31,7 @@
 extern uint8_t usbMessage[32];
 extern int usbMessageLen;
 volatile int USB_Message = 0;
+uint16_t sync_count = 0;
 
 FATFS Fatfs;
 FIL file;
@@ -305,132 +306,130 @@ int main()
 		while(1);
 	}
 	
-  while (1)
-  {
+    while (1)
+    {
 		
-		//if (RADIO_GetBufferFill() > 0)
-		//{
-			
-			// fill from 2nd byte
-			while (!RADIO_Recv(buffer+1));
-			
-			// get current time
-			current_time = RTC_CounterGet();
-			
-			if (buffer[1] & 0x02 || buffer[1] & 0x01)
-				last_respire_data = current_time;
-			else if (buffer[1] & 0x03 || buffer[1] & 0x04)
-				last_pressure_data = current_time;
-			else
-				continue;
-			
-			/*
-			if (buffer[1] & 0x01)
-			{
-				
-				time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
-					
-				char filename[19];
-				//sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
-				
-				struct tm *curDate;
-				
-				curDate = localtime(&epochTime);
-				
-				strftime(filename,19,"***%m%d%H%M.txt***",curDate);
-				
-				USB_Transmit(filename,19);
-				
-			}
-			*/
-			/*
-			if (!fileOpened)
-			{
-				
-				if (buffer[1] & 0x01)
-				{
-					
-					//time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
-					
-					time_t epochTime = 1354551615; // ~ 3/12/12 16:20
-					
-					char filename[13];
-					//sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
-					
-					struct tm *curDate;
-					
-					curDate = localtime(&epochTime);
-					
-					strftime(filename,13,"%m%d%H%M.txt",curDate);
-					
-					if (f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
-					{
-						INT_Disable();
-						LED_On(GREEN);
-						LED_On(BLUE);
-						LED_Off(RED);
-						while(1);
-					}
-					
-					fileOpened = true;
-					
-				}
-				else
-				{
-					continue;
-				}
-				
-			}
-			*/
-			
-			// set first byte to signal start
-			buffer[0] = '*';
-			
-			if (buffer[1] & 0x01)
-			{
-			
-				// set time
-				//buffer[28] = (current_time >> 8) & 0xFF;
-				//buffer[29] = (current_time) & 0xFF;
-				// clear sync stuff
-				//for (i = 11; i < 15; i++)
-				//	buffer[i] = 0;
-				
-      }
-      
-      // move sequence number
-      buffer[41] = ((buffer[1] & 0xF0) >> 4);
-      buffer[1] &= 0x0F;
-      // move dropped packet count
-      buffer[42] = ((buffer[2] & 0xF0) >> 4);
-      buffer[2] &= 0x0F;
-			
-			// transmit
-			USB_Transmit(buffer,43);
-			/*
-			// store on SD
-			uint32_t bytes_written;
-			if (f_write(&file, buffer, 43, (UINT*)&bytes_written) != FR_OK) 
-			{
-				INT_Disable();
-				LED_Off(BLUE);
-				LED_On(RED);
-				LED_On(GREEN);
-				while(1);
-			}
-			
-			if (f_sync(&file) != FR_OK || bytes_written < 43)
-			{
-				INT_Disable();
-				LED_On(RED);
-				LED_On(BLUE);
-				LED_Off(GREEN);
-				while(1);
-			}
-			*/
-			
-		//}
+		EMU_EnterEM1();
 		
-  }
+        // fill from 2nd byte
+        if (!RADIO_Recv(buffer+1)) 
+            continue;
+        
+        // get current time
+        current_time = RTC_CounterGet();
+        
+        if (buffer[1] & 0x02 || buffer[1] & 0x01)
+            last_respire_data = current_time;
+        else if (buffer[1] & 0x03 || buffer[1] & 0x04)
+            last_pressure_data = current_time;
+        else
+            continue;
+        
+        /*
+        if (buffer[1] & 0x01)
+        {
+            
+            time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
+                
+            char filename[19];
+            //sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
+            
+            struct tm *curDate;
+            
+            curDate = localtime(&epochTime);
+            
+            strftime(filename,19,"***%m%d%H%M.txt***",curDate);
+            
+            USB_Transmit(filename,19);
+            
+        }
+        */
+        
+        if (!fileOpened)
+        {
+            
+            if (buffer[1] & 0x01)
+            {
+                
+                //time_t epochTime = (buffer[7] << 24) | (buffer[8] << 16) | (buffer[9] << 8) | (buffer[10]);
+                
+                time_t epochTime = 1354551615; // ~ 3/12/12 16:20
+                
+                char filename[13];
+                //sprintf(filename,"%8.8i.txt",10300000); // MMDDHHMM
+                
+                struct tm *curDate;
+                
+                curDate = localtime(&epochTime);
+                
+                strftime(filename,13,"%m%d%H%M.txt",curDate);
+                
+                if (f_open(&file, filename, FA_CREATE_ALWAYS | FA_WRITE) != FR_OK)
+                {
+                    INT_Disable();
+                    LED_On(GREEN);
+                    LED_On(BLUE);
+                    LED_Off(RED);
+                    while(1);
+                }
+                
+                fileOpened = true;
+                
+            }
+            else
+            {
+                continue;
+            }
+            
+        }
+        
+        // set first byte to signal start
+        buffer[0] = '*';
+        
+        if (buffer[1] & 0x01)
+        {
+        
+            // set time
+            buffer[28] = (current_time >> 8) & 0xFF;
+            buffer[29] = (current_time) & 0xFF;
+            // clear sync stuff
+            for (i = 11; i < 15; i++)
+            	buffer[i] = 0;
+            
+        }
+
+        // move sequence number
+        buffer[41] = ((buffer[1] & 0xF0) >> 4);
+        buffer[1] &= 0x0F;
+        // move dropped packet count
+        buffer[42] = ((buffer[2] & 0xF0) >> 4);
+        buffer[2] &= 0x0F;
+        
+        // transmit
+        USB_Transmit(buffer,43);
+        
+        // store on SD
+        uint32_t bytes_written;
+        if (f_write(&file, buffer, 43, (UINT*)&bytes_written) != FR_OK) 
+        {
+            INT_Disable();
+            LED_Off(BLUE);
+            LED_On(RED);
+            LED_On(GREEN);
+            while(1);
+        }
+        
+        if (sync_count++ % 1000 == 999)
+        {
+            if (f_sync(&file) != FR_OK || bytes_written < 43)
+            {
+                INT_Disable();
+                LED_On(RED);
+                LED_On(BLUE);
+                LED_Off(GREEN);
+                while(1);
+            }
+		}
+    }
 	
 }
